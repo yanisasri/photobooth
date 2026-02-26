@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PHOTOBOOTH</title>
+  <link rel="stylesheet" href="photobooth.css" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+
+  <header>
+    <div class="logo" onclick="goTo('landing')">PHOTOBOOTH</div>
+    <nav>
+      <span class="nav-link" onclick="goTo('layout')">ready to take photos?</span>
+      <button class="btn-pill" onclick="goTo('contact')">contact</button>
+    </nav>
+  </header>
+
+  <!-- LANDING -->
+  <section id="page-landing" class="page active">
+    <div class="bg-blob blob1"></div><div class="bg-blob blob2"></div>
+    <div class="page-content landing-content">
+      <h1>hey there,<br>thanks for visiting my website!</h1>
+      <p>This Photobooth app is made solely as a hobby project with no other intentions than for users to have fun playing around with it.</p>
+      <p>Ensuring your privacy is my top priority and the features of this photobooth website work entirely within your browser and device. To clarify, <strong>no photos or videos are uploaded or stored on any external servers</strong>. I assure you.</p>
+      <p>With all that being said, have a look around and enjoy! Feel free to share this website with your friends and online. I'd love for more people to discover this and have fun taking pictures with their friends!</p>
+      <button class="btn-pill btn-landing" onclick="goTo('layout')"><em>wanna get started?</em></button>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="page-contact" class="page">
+    <div class="bg-blob blob1"></div><div class="bg-blob blob2"></div>
+    <div class="page-content contact-content">
+      <div class="contact-card">
+        <h2>i'd love to hear your thoughts about the photobooth app!</h2>
+        <p>Any feedback is greatly appreciated! I'm always open to learning more about what would make the app better!</p>
+        <div class="contact-form-grid">
+          <div class="contact-left">
+            <div class="field-group">
+              <label>Your name</label>
+              <input id="contact-name" type="text" placeholder="Jane Doe" />
+            </div>
+            <div class="field-group">
+              <label>Your email</label>
+              <input id="contact-email" type="email" placeholder="email@janesfakedomain.net" />
+            </div>
+            <button class="btn-pill btn-solid" onclick="submitContact()">submit</button>
+            <p id="contact-status" class="contact-status"></p>
+          </div>
+          <div class="contact-right">
+            <div class="field-group full-height">
+              <label>Your message</label>
+              <textarea id="contact-message" placeholder="Enter your question or message here"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PICK LAYOUT -->
+  <section id="page-layout" class="page">
+    <div class="bg-blob blob1"></div><div class="bg-blob blob2"></div>
+    <div class="page-content layout-content">
+      <div class="layout-left">
+        <h2>pick a layout</h2>
+        <p class="subtitle">Frame color changes can be made after the photos are taken.</p>
+        <div class="tab-group">
+          <button class="tab" data-count="2" onclick="selectCount(2)">2 photos</button>
+          <button class="tab" data-count="3" onclick="selectCount(3)">3 photos</button>
+          <button class="tab" data-count="4" onclick="selectCount(4)">4 photos</button>
+        </div>
+        <div class="layout-spacer"></div>
+        <button class="btn-pill btn-landing select-btn" onclick="goToCamera()"><em>select</em></button>
+        <p id="layout-hint" class="layout-hint"></p>
+      </div>
+      <div class="layout-right">
+        <div class="layout-previews" id="layout-previews"></div>
+        <div class="orientation-toggle">
+          <button class="btn-pill btn-ghost orient-btn" id="orient-btn" onclick="toggleOrientation()"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAMERA -->
+  <section id="page-camera" class="page">
+    <div class="bg-blob blob1"></div><div class="bg-blob blob2"></div>
+    <div class="page-content camera-content">
+      <div class="camera-header">
+        <div>
+          <h2>take photos</h2>
+          <p class="subtitle" id="camera-hint">Wave your hand to start a 3 second timer.</p>
+        </div>
+        <span class="photo-counter" id="photo-counter">0/6</span>
+      </div>
+      <div class="camera-viewport" id="camera-viewport">
+        <video id="camera-video" autoplay playsinline muted></video>
+        <canvas id="camera-canvas" style="display:none"></canvas>
+        <div class="countdown-overlay" id="countdown-overlay"><span id="countdown-num"></span></div>
+        <div class="flash-overlay" id="flash-overlay"></div>
+      </div>
+      <div class="camera-bottom">
+        <button class="btn-pill btn-ghost done-btn" onclick="doneCamera()">done</button>
+        <p id="camera-error" class="camera-error"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHOOSE PHOTOS -->
+  <section id="page-choose" class="page">
+    <div class="bg-blob blob1"></div><div class="bg-blob blob2"></div>
+    <div class="page-content choose-content">
+      <div class="choose-left">
+        <h2>choose photos</h2>
+        <p class="subtitle" id="choose-subtitle">Select up to 3 photos. The rest will be discarded.</p>
+        <div class="photo-grid" id="photo-grid"></div>
+        <button class="btn-pill btn-ghost done-btn" onclick="doneChoose()">done</button>
+      </div>
+      <div class="choose-right">
+        <div class="strip-preview-wrap" id="strip-preview-wrap">
+          <div class="strip-preview" id="strip-preview"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DOWNLOAD -->
+  <section id="page-download" class="page">
+    <div class="bg-blob blob1"></div><div class="bg-blob blob2"></div>
+    <div class="page-content download-content">
+
+      <div class="download-header">
+        <h2>all done!</h2>
+        <p class="subtitle">Last edits! Choose your tint and frame color.</p>
+      </div>
+
+      <div class="download-main">
+
+        <!-- LEFT: tint picker (order: 0 desktop, order: 1 mobile) -->
+        <div class="picker-side picker-left">
+          <p class="picker-label">image tint</p>
+          <div class="color-picker-panel">
+            <div class="color-gradient-box" id="tint-gradient-box">
+              <canvas id="tint-gradient-canvas" width="180" height="148"></canvas>
+              <div class="color-cursor" id="tint-gradient-cursor"></div>
+            </div>
+            <div class="hue-slider-wrap">
+              <canvas id="tint-hue-canvas" width="180" height="16"></canvas>
+              <div class="hue-thumb" id="tint-hue-thumb"></div>
+            </div>
+            <div class="color-hex-row">
+              <div class="hex-swatch" id="tint-hex-swatch"></div>
+              <span class="hex-label">Hex</span>
+              <input class="hex-input" id="tint-hex-input" type="text" value="FFFFFF" maxlength="6" />
+            </div>
+            <div class="picker-row">
+              <span class="hex-label">Opacity</span>
+              <input type="range" id="tint-opacity" min="0" max="100" value="0" class="opacity-slider" />
+              <span class="hex-label" id="tint-opacity-val">0%</span>
+            </div>
+            <div class="picker-row">
+              <span class="hex-label">Greyscale</span>
+              <button class="toggle-btn" id="greyscale-toggle" onclick="toggleGreyscale()">off</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CENTER: strip + buttons (order: 0 desktop, order: 0 mobile = first) -->
+        <div class="download-center">
+          <div class="final-strip-wrap">
+            <canvas id="final-canvas"></canvas>
+          </div>
+          <div class="download-actions">
+            <button class="btn-pill btn-solid" onclick="downloadStrip()">download</button>
+            <button class="btn-pill btn-landing" onclick="goTo('layout')"><em>wanna take more photos?</em></button>
+          </div>
+        </div>
+
+        <!-- RIGHT: frame picker (order: 0 desktop, order: 1 mobile) -->
+        <div class="picker-side picker-right">
+          <p class="picker-label">frame color</p>
+          <div class="color-picker-panel">
+            <div class="color-gradient-box" id="color-gradient-box">
+              <canvas id="gradient-canvas" width="180" height="148"></canvas>
+              <div class="color-cursor" id="gradient-cursor"></div>
+            </div>
+            <div class="hue-slider-wrap">
+              <canvas id="hue-canvas" width="180" height="16"></canvas>
+              <div class="hue-thumb" id="hue-thumb"></div>
+            </div>
+            <div class="color-hex-row">
+              <div class="hex-swatch" id="hex-swatch"></div>
+              <span class="hex-label">Hex</span>
+              <input class="hex-input" id="hex-input" type="text" value="FFFFFF" maxlength="6" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <a href="https://yanisa.netlify.app/" target="_blank" rel="noreferrer"><em>yanisa srisa-ard</em></a>
+  </footer>
+
+  <script src="photobooth.js"></script>
+</body>
+</html>
