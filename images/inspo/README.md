@@ -28,5 +28,5 @@ images/inspo/spongebob/  → "spongebob & patrick duo memes"
 
 Add a new object to the `INSPO_THEMES` array with a unique `key`, a `folder`
 path (create the folder here alongside the others), a `label` shown to
-users, a short `blurb`, and the `files` array. It'll automatically show up
-as a new theme card on the layout page.
+users, and the `files` array. It'll automatically show up as a new theme
+card on the layout page.

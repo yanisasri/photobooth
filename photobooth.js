@@ -162,7 +162,8 @@ function goToCamera() {
   document.getElementById('layout-hint').textContent = '';
 
   if (typeof duoActive !== 'undefined' && duoActive && duoRole === 'host' && typeof sendDuo === 'function') {
-    sendDuo({ type: 'layout', count: selectedCount, orientation: selectedOrientation });
+    const inspo = typeof inspoThemeKey !== 'undefined' ? inspoThemeKey : null;
+    sendDuo({ type: 'layout', count: selectedCount, orientation: selectedOrientation, inspo });
   }
 
   goTo('camera');

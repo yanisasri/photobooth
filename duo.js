@@ -9,6 +9,7 @@
      {type:'hello', name}
      {type:'cursor', x, y}                    // normalized 0-1
      {type:'layout', count, orientation, inspo}
+     {type:'inspoRef', theme, index}          // synced meme reference (see below)
      {type:'progress', count}                 // photos taken so far
      {type:'selectedPhotos', photos, style}
      {type:'style', frameColor, tintColor, tintOpacity, useGreyscale}
@@ -23,11 +24,15 @@
      - renderFinalCanvasDuo() → called from renderFinalCanvasAny() when active
      - broadcastDuoStyleIfActive() → color/tint/greyscale change handlers
 
-   Long-distance duo mode and inspo mode are independent features —
-   picking a meme theme has no effect on whether you're in a duo
-   session, and vice versa. If both happen to be active at once,
-   the duo two-sided strip (you vs. your friend) takes priority over
-   the inspo comparison strip on the download page.
+   Long-distance duo mode and inspo mode can be combined: whoever
+   creates the room picks the meme theme (sent along with the layout
+   choice), and whichever of the two of you picks a new reference image
+   (by taking a photo, or hitting "choose another") broadcasts it as
+   {type:'inspoRef'} so you're always both looking at the same meme —
+   see inspo.js's onCameraInitInspo()/onPhotoTakenInspo()/onDuoInspoRef().
+   Note the final downloaded strip still only shows the duo two-sided
+   comparison (you vs. your friend) — the meme reference doesn't appear
+   there, only while taking photos.
 ═══════════════════════════════════════════════════ */
 
 let duoActive           = false;
@@ -183,7 +188,12 @@ function onDuoData(msg) {
     case 'layout':
       selectedCount = msg.count;
       selectedOrientation = msg.orientation;
+      if (typeof inspoThemeKey !== 'undefined') inspoThemeKey = msg.inspo || null;
       goTo('camera');
+      break;
+
+    case 'inspoRef':
+      if (typeof onDuoInspoRef === 'function') onDuoInspoRef(msg.theme, msg.index);
       break;
 
     case 'progress':

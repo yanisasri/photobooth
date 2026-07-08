@@ -144,6 +144,7 @@
       <div class="inspo-panel-header">
         <h3>need inspo for what poses to do?</h3>
         <p class="subtitle">Look below and choose a theme you want to recreate — we'll show a random meme from it next to the camera for every photo you take, then compare your strip to theirs side by side. Totally optional!</p>
+        <p class="inspo-duo-note" id="inspo-duo-note" style="display:none;">👯 in long-distance duo mode, whoever creates the room picks the theme for both of you, and you'll always see the same meme at the same time — but the meme reference only shows while taking photos, it won't appear on the final downloaded strip (that shows you & your friend side by side instead).</p>
       </div>
       <div class="inspo-theme-grid" id="inspo-theme-grid"></div>
     </div>
@@ -156,7 +157,7 @@
       <div class="inspo-reference-panel" id="inspo-reference-panel">
         <p class="inspo-reference-label">recreate this ✨</p>
         <div class="inspo-reference-img-wrap" id="inspo-reference-img-wrap"></div>
-        <p class="inspo-reference-counter" id="inspo-reference-counter"></p>
+        <button class="btn-pill btn-ghost inspo-shuffle-btn" onclick="chooseAnotherInspoPic()">🔀 choose another inspo pic</button>
       </div>
       <div class="camera-main" id="camera-main">
         <div class="camera-header">

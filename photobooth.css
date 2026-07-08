@@ -405,6 +405,15 @@ input:focus, textarea:focus { border-color: var(--white-60); background: rgba(24
   gap: 20px;
 }
 .inspo-panel-header h3 { font-family: 'DM Serif Display', serif; font-size: 1.4rem; font-weight: 400; margin-bottom: 6px; }
+.inspo-duo-note {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--ink-muted);
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
 
 .inspo-theme-grid {
   display: grid;
@@ -499,7 +508,7 @@ input:focus, textarea:focus { border-color: var(--white-60); background: rgba(24
   background: rgba(255,255,255,0.08);
 }
 .inspo-reference-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.inspo-reference-counter { font-size: 0.72rem; color: var(--ink-muted); text-align: center; }
+.inspo-shuffle-btn { font-size: 0.72rem; padding: 7px 14px; align-self: center; }
 
 .camera-header {
   display: flex;

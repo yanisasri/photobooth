@@ -31,9 +31,11 @@ Take a strip together with a friend, wherever they are — no accounts, no app i
 
 ### ✨ Inspos For Friends (gen z meme recreations)
 Right on the layout page is a "need inspo for what poses to do?" panel with theme cards to choose from. It's completely optional and independent of long-distance duo mode and of your photo count/orientation choices, which work exactly as usual:
-- **Three themes** — surprise general memes, gibraltar monkey memes, and spongebob & patrick duo memes — each shown as a card with a small preview mosaic.
+- **Three themes** — surprise general memes, gibraltar monkey memes, and spongebob & patrick duo memes — each shown as a card with a small preview mosaic (just the theme name now, no blurb text).
 - **Always random** — once a theme is picked, a random image from it is shown next to the camera for every photo, re-rolling after each shot. That reference box automatically matches the shape (landscape/square/portrait) of your chosen layout's photo slots.
-- **Side-by-side comparison** — when you choose which photos go on your strip, the preview (and the final download) shows your strip right next to the exact memes you were shown for each of those shots — side by side in portrait, stacked top/bottom in landscape. No labels or headers are drawn on top of the strip itself, so it stays clean.
+- **Choose another** — don't like the meme you got? Hit "🔀 choose another inspo pic" on the camera page to re-roll it without needing to take a photo first.
+- **Side-by-side comparison** — when you choose which photos go on your strip, the preview (and the final download) shows your strip right next to the exact memes you were shown for each of those shots — side by side in portrait, stacked top/bottom in landscape. No labels or headers are drawn on top of the strip itself, so it stays clean. Tint, greyscale, and frame color are all applied to both sides.
+- **Works in duo mode too** — whoever creates the room picks the theme (it's sent along with the layout choice), and after that, whichever of you picks a new reference — by taking a photo or hitting "choose another" — is broadcast to the other so you're always looking at the same meme at the same time. The catch: the meme reference only shows while taking photos — the final downloaded strip in duo mode always shows the two-sided you-vs-friend comparison instead (there's a note about this right in the theme panel when duo mode is active).
 - Reference images live in [`images/inspo/`](images/inspo/README.md) — drop your own images in there and add the filename to `inspo.js`'s theme list to make them show up.
 
 ### 🎥 Video Strip Downloads
@@ -152,7 +154,9 @@ const grey = 0.299 * r + 0.587 * g + 0.114 * b;
 
 ### Inspos For Friends
 
-Picking a theme just sets which folder of images to draw from — it doesn't touch your layout choice at all. Every time a photo is captured, `photoInspoRefs[photoIndex]` records exactly which meme image was on screen for that shot, then a new random one is picked for the next photo. When you get to the choose page, `renderStripPreviewInspo()` builds two strip columns (or rows) side by side: your chosen photos, and — using those same recorded refs — the matching memes, in the same order. The final download reuses the same pairing logic on a `<canvas>` via `renderFinalCanvasInspo()`, so the side-by-side comparison you previewed is exactly what gets saved.
+Picking a theme just sets which folder of images to draw from — it doesn't touch your layout choice at all. Every time a photo is captured, `photoInspoRefs[photoIndex]` records exactly which meme image was on screen for that shot, then a new random one is picked for the next photo (the "choose another" button triggers the same re-roll on demand). When you get to the choose page, `renderStripPreviewInspo()` builds two strip columns (or rows) side by side: your chosen photos, and — using those same recorded refs — the matching memes, in the same order. The final download reuses the same pairing logic (including tint/greyscale/frame color) on a `<canvas>` via `renderFinalCanvasInspo()`, so the side-by-side comparison you previewed is exactly what gets saved.
+
+In duo mode, the theme choice rides along with the `{type:'layout'}` message the room creator sends, and every reference pick (initial, re-rolled, or from "choose another") is broadcast as `{type:'inspoRef', theme, index}` so both browsers always show the same meme at the same moment — see `onDuoInspoRef()` in `inspo.js` and the `'inspoRef'` case in `duo.js`'s message switch.
 
 ### Video Strip Downloads
 
@@ -173,12 +177,6 @@ The "what's new" banner at the top of the page is intentionally stateless — it
 | ≤ 900px | Download page: strip moves to top, both pickers sit side-by-side below |
 | ≤ 768px | Layout + choose pages collapse to single column; nav link hidden |
 | ≤ 480px | Font sizes reduce; download buttons stack; photo grid switches to 2 columns |
-
----
-
-## 🚀 Deployment
-
-Deployed on Netlify. No build step required — open `index.html` directly in a browser (camera permission required).
 
 ---
 

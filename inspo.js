@@ -17,6 +17,15 @@
      - onPhotoTakenInspo()          → takePhoto()
      - renderStripPreview() branches to renderStripPreviewInspo()
      - renderFinalCanvasAny() branches to renderFinalCanvasInspo()
+
+   Duo mode sync: the room creator's chosen theme travels along with the
+   {type:'layout'} message (see duo.js), and after that whoever picks a
+   new reference image — by taking a photo, or via "choose another" —
+   broadcasts it as {type:'inspoRef'} so both of you always see the same
+   meme at the same time. onDuoInspoRef() is duo.js's entry point for
+   applying an incoming pick. The meme reference only shows while taking
+   photos, though — the final downloaded strip in duo mode shows the
+   two-sided you-vs-friend comparison instead (see duo.js).
 ═══════════════════════════════════════════════════ */
 
 const INSPO_THEMES = [
@@ -24,7 +33,6 @@ const INSPO_THEMES = [
     key: 'general',
     folder: 'images/inspo/general',
     label: 'surprise general memes',
-    blurb: 'a surprise mix of gen z classics',
     files: [
       'meme1.jpg', 'meme2.jpg', 'meme3.jpg', 'meme4.jpg', 'meme5.jpg',
       'meme6.jpg', 'meme7.jpg', 'meme8.jpg', 'meme9.jpg', 'meme10.JPG',
@@ -36,14 +44,12 @@ const INSPO_THEMES = [
     key: 'monkey',
     folder: 'images/inspo/monkey',
     label: 'gibraltar monkey memes',
-    blurb: 'the famous gibraltar monkeys',
     files: ['monkey1.jpg', 'monkey2.jpg', 'monkey3.jpg', 'monkey4.jpg'],
   },
   {
     key: 'spongebob',
     folder: 'images/inspo/spongebob',
     label: 'spongebob & patrick duo memes',
-    blurb: 'recreate iconic spongebob & patrick moments',
     files: [
       'spongebob1.jpg', 'spongebob2.jpg', 'spongebob3.jpg',
       'spongebob4.jpg', 'spongebob5.jpg', 'spongebob6.jpg', 'spongebob7.jpg'
@@ -106,6 +112,11 @@ function loadImageForCanvas(url, cb) {
 
 function renderInspoPanelVisibility() {
   renderInspoThemeGrid();
+  const note = document.getElementById('inspo-duo-note');
+  if (note) {
+    const inDuo = typeof duoActive !== 'undefined' && duoActive;
+    note.style.display = inDuo ? 'block' : 'none';
+  }
 }
 
 function renderInspoThemeGrid() {
@@ -131,10 +142,6 @@ function renderInspoThemeGrid() {
     const title = document.createElement('h4');
     title.textContent = theme.label;
     card.appendChild(title);
-
-    const blurb = document.createElement('p');
-    blurb.textContent = theme.blurb;
-    card.appendChild(blurb);
 
     if (inspoThemeKey === theme.key) {
       const badge = document.createElement('span');
@@ -174,17 +181,45 @@ function onCameraInitInspo() {
     wrap.style.aspectRatio = slotW + ' / ' + slotH;
   }
 
-  currentInspoIndex = pickRandomInspoIndex(inspoThemeKey);
-  updateInspoReferenceDisplay();
+  // In duo mode, the room creator's pick is authoritative — whoever
+  // joined waits for the {type:'inspoRef'} broadcast instead of rolling
+  // their own, so you both start out looking at the same meme.
+  const waitForHostPick = typeof duoActive !== 'undefined' && duoActive && duoRole === 'guest';
+  if (waitForHostPick) {
+    currentInspoIndex = null;
+    updateInspoReferenceDisplay();
+  } else {
+    currentInspoIndex = pickRandomInspoIndex(inspoThemeKey);
+    updateInspoReferenceDisplay();
+    broadcastInspoRefIfActive();
+  }
 }
 
 function updateInspoReferenceDisplay() {
   const wrap    = document.getElementById('inspo-reference-img-wrap');
-  const counter = document.getElementById('inspo-reference-counter');
   const theme   = getInspoTheme(inspoThemeKey);
-  if (!wrap || !counter || !theme || currentInspoIndex === null) return;
+  if (!wrap || !theme) return;
+
+  if (currentInspoIndex === null) {
+    wrap.innerHTML = '<div class="inspo-thumb-missing"><span class="missing-emoji">⏳</span><span>waiting for your friend\'s pick…</span></div>';
+    return;
+  }
   setImageInto(wrap, getInspoImageUrl(inspoThemeKey, currentInspoIndex), theme.label);
-  counter.textContent = theme.label + ' · random 🎲';
+}
+
+// Broadcasts the current meme reference to a connected duo peer, if any,
+// so you're always both looking at the same one.
+function broadcastInspoRefIfActive() {
+  if (typeof duoActive === 'undefined' || !duoActive) return;
+  if (typeof sendDuo !== 'function' || !inspoThemeKey || currentInspoIndex === null) return;
+  sendDuo({ type: 'inspoRef', theme: inspoThemeKey, index: currentInspoIndex });
+}
+
+// Called by duo.js when the peer broadcasts a new (or their initial) pick.
+function onDuoInspoRef(theme, index) {
+  inspoThemeKey = theme;
+  currentInspoIndex = index;
+  updateInspoReferenceDisplay();
 }
 
 function onPhotoTakenInspo() {
@@ -192,6 +227,16 @@ function onPhotoTakenInspo() {
   photoInspoRefs[capturedPhotos.length - 1] = { theme: inspoThemeKey, index: currentInspoIndex };
   currentInspoIndex = pickRandomInspoIndex(inspoThemeKey, currentInspoIndex);
   updateInspoReferenceDisplay();
+  broadcastInspoRefIfActive();
+}
+
+// "choose another inspo pic" button on the camera page — re-rolls the
+// reference shown right now, without waiting for a photo to be taken.
+function chooseAnotherInspoPic() {
+  if (!inspoThemeKey || currentInspoIndex === null) return;
+  currentInspoIndex = pickRandomInspoIndex(inspoThemeKey, currentInspoIndex);
+  updateInspoReferenceDisplay();
+  broadcastInspoRefIfActive();
 }
 
 // ── Choose page: side-by-side / stacked comparison preview ──
@@ -310,7 +355,31 @@ function renderFinalCanvasInspo() {
       let sx = 0, sy = 0, sw = img.naturalWidth, sh = img.naturalHeight;
       if (srcAR > dstAR) { sw = sh * dstAR; sx = (img.naturalWidth - sw) / 2; }
       else               { sh = sw / dstAR; sy = (img.naturalHeight - sh) / 2; }
-      ctx.drawImage(img, sx, sy, sw, sh, x, y, slotW, slotH);
+
+      if (useGreyscale) {
+        const tmp = document.createElement('canvas');
+        tmp.width = slotW; tmp.height = slotH;
+        const tctx = tmp.getContext('2d');
+        tctx.drawImage(img, sx, sy, sw, sh, 0, 0, slotW, slotH);
+        const id = tctx.getImageData(0, 0, slotW, slotH);
+        for (let p = 0; p < id.data.length; p += 4) {
+          const grey = 0.299 * id.data[p] + 0.587 * id.data[p+1] + 0.114 * id.data[p+2];
+          id.data[p] = id.data[p+1] = id.data[p+2] = grey;
+        }
+        tctx.putImageData(id, 0, 0);
+        ctx.drawImage(tmp, x, y);
+      } else {
+        ctx.drawImage(img, sx, sy, sw, sh, x, y, slotW, slotH);
+      }
+
+      if (tintOpacity > 0) {
+        const [tr, tg, tb] = hexToRgb(tintColor);
+        ctx.save();
+        ctx.globalAlpha = tintOpacity;
+        ctx.fillStyle = `rgb(${tr},${tg},${tb})`;
+        ctx.fillRect(x, y, slotW, slotH);
+        ctx.restore();
+      }
     }
 
     onImageDone();
