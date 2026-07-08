@@ -8,13 +8,24 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
+
+  <!-- UPDATE BANNER -->
+  <div class="update-banner" id="update-banner">
+    <div class="update-banner-inner">
+      <span class="update-banner-badge">new</span>
+      <span class="update-banner-text">✨ Just added: <strong>long-distance duo mode</strong> (take a strip with a friend anywhere), <strong>inspos for friends</strong> (recreate gen z memes), and <strong>video downloads</strong> for every photo strip!</span>
+      <button class="update-banner-close" id="update-banner-close" onclick="dismissUpdateBanner()" aria-label="Dismiss banner">✕</button>
+    </div>
+  </div>
 
   <header>
     <div class="logo" onclick="goTo('landing')">PHOTOBOOTH</div>
     <nav>
       <span class="nav-link" onclick="goTo('layout')">ready to take photos?</span>
+      <span class="duo-header-badge" id="duo-header-badge" style="display:none;"></span>
       <button class="btn-pill" onclick="goTo('contact')">contact</button>
     </nav>
   </header>
@@ -27,7 +38,48 @@
       <p>This Photobooth app is made solely as a hobby project with no other intentions than for users to have fun playing around with it.</p>
       <p>Ensuring your privacy is my top priority and the features of this photobooth website work entirely within your browser and device. To clarify, <strong>no photos or videos are uploaded or stored on any external servers</strong>. I assure you.</p>
       <p>With all that being said, have a look around and enjoy! Feel free to share this website with your friends and online. I'd love for more people to discover this and have fun taking pictures with their friends!</p>
-      <button class="btn-pill btn-landing" onclick="goTo('layout')"><em>wanna get started?</em></button>
+      <div class="landing-btn-row">
+        <button class="btn-pill btn-landing" onclick="goTo('layout')"><em>wanna get started?</em></button>
+        <button class="btn-pill btn-ghost" onclick="goTo('duo-setup')">👯 long distance duo mode</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- DUO SETUP -->
+  <section id="page-duo-setup" class="page">
+    <div class="bg-blob blob1"></div><div class="bg-blob blob2"></div>
+    <div class="page-content duo-setup-content">
+      <h2>long distance duo mode</h2>
+      <p class="subtitle">Take a photobooth strip together with a friend, wherever they are. Share a code, see both your cursors live, and get a strip split into two sides — one for each of you.</p>
+
+      <div class="duo-name-field">
+        <label>Your name</label>
+        <input id="duo-name-input" type="text" placeholder="e.g. Yanisa" maxlength="18" />
+      </div>
+
+      <div class="duo-setup-grid">
+        <div class="duo-setup-card">
+          <h3>create a room</h3>
+          <p class="subtitle">Start a session and share the code with your friend.</p>
+          <button class="btn-pill btn-solid" onclick="duoCreateRoom()">create room</button>
+          <div class="duo-code-display" id="duo-code-display" style="display:none;">
+            <p class="duo-code-label">share this code</p>
+            <div class="duo-code-value" id="duo-code-value"></div>
+            <button class="btn-pill btn-ghost" id="duo-copy-btn" onclick="duoCopyCode()">copy code</button>
+          </div>
+        </div>
+
+        <div class="duo-setup-divider">or</div>
+
+        <div class="duo-setup-card">
+          <h3>join a room</h3>
+          <p class="subtitle">Enter the code your friend shared with you.</p>
+          <input id="duo-join-input" type="text" placeholder="e.g. K7QX2" maxlength="8" class="duo-join-input" />
+          <button class="btn-pill btn-solid" onclick="duoJoinRoom()">join room</button>
+        </div>
+      </div>
+
+      <p id="duo-status" class="duo-status"></p>
     </div>
   </section>
 
@@ -42,11 +94,11 @@
           <div class="contact-left">
             <div class="field-group">
               <label>Your name</label>
-              <input id="contact-name" type="text" placeholder="Jane Doe" />
+              <input id="contact-name" type="text" placeholder="yanisa!" />
             </div>
             <div class="field-group">
               <label>Your email</label>
-              <input id="contact-email" type="email" placeholder="email@janesfakedomain.net" />
+              <input id="contact-email" type="email" placeholder="email@fakedomain.net" />
             </div>
             <button class="btn-pill btn-solid" onclick="submitContact()">submit</button>
             <p id="contact-status" class="contact-status"></p>
@@ -69,7 +121,7 @@
       <div class="layout-left">
         <h2>pick a layout</h2>
         <p class="subtitle">Frame color changes can be made after the photos are taken.</p>
-        <div class="tab-group">
+        <div class="tab-group" id="layout-tab-group">
           <button class="tab" data-count="2" onclick="selectCount(2)">2 photos</button>
           <button class="tab" data-count="3" onclick="selectCount(3)">3 photos</button>
           <button class="tab" data-count="4" onclick="selectCount(4)">4 photos</button>
@@ -77,6 +129,7 @@
         <div class="layout-spacer"></div>
         <button class="btn-pill btn-landing select-btn" onclick="goToCamera()"><em>select</em></button>
         <p id="layout-hint" class="layout-hint"></p>
+        <p class="duo-waiting-msg" id="layout-duo-waiting" style="display:none;">waiting for your friend to choose a layout…</p>
       </div>
       <div class="layout-right">
         <div class="layout-previews" id="layout-previews"></div>
@@ -85,28 +138,45 @@
         </div>
       </div>
     </div>
+
+    <!-- INSPOS FOR FRIENDS PANEL -->
+    <div class="inspo-panel" id="inspo-panel">
+      <div class="inspo-panel-header">
+        <h3>need inspo for what poses to do?</h3>
+        <p class="subtitle">Look below and choose a theme you want to recreate — we'll show a random meme from it next to the camera for every photo you take, then compare your strip to theirs side by side. Totally optional!</p>
+      </div>
+      <div class="inspo-theme-grid" id="inspo-theme-grid"></div>
+    </div>
   </section>
 
   <!-- CAMERA -->
   <section id="page-camera" class="page">
     <div class="bg-blob blob1"></div><div class="bg-blob blob2"></div>
-    <div class="page-content camera-content">
-      <div class="camera-header">
-        <div>
-          <h2>take photos</h2>
-          <p class="subtitle" id="camera-hint">Wave your hand to start a 3 second timer.</p>
+    <div class="page-content camera-content" id="camera-content">
+      <div class="inspo-reference-panel" id="inspo-reference-panel">
+        <p class="inspo-reference-label">recreate this ✨</p>
+        <div class="inspo-reference-img-wrap" id="inspo-reference-img-wrap"></div>
+        <p class="inspo-reference-counter" id="inspo-reference-counter"></p>
+      </div>
+      <div class="camera-main" id="camera-main">
+        <div class="camera-header">
+          <div>
+            <h2>take photos</h2>
+            <p class="subtitle" id="camera-hint">Wave your hand to start a 3 second timer.</p>
+          </div>
+          <span class="photo-counter" id="photo-counter">0/6</span>
         </div>
-        <span class="photo-counter" id="photo-counter">0/6</span>
-      </div>
-      <div class="camera-viewport" id="camera-viewport">
-        <video id="camera-video" autoplay playsinline muted></video>
-        <canvas id="camera-canvas" style="display:none"></canvas>
-        <div class="countdown-overlay" id="countdown-overlay"><span id="countdown-num"></span></div>
-        <div class="flash-overlay" id="flash-overlay"></div>
-      </div>
-      <div class="camera-bottom">
-        <button class="btn-pill btn-ghost done-btn" onclick="doneCamera()">done</button>
-        <p id="camera-error" class="camera-error"></p>
+        <p class="duo-friend-progress" id="duo-friend-progress" style="display:none;"></p>
+        <div class="camera-viewport" id="camera-viewport">
+          <video id="camera-video" autoplay playsinline muted></video>
+          <canvas id="camera-canvas" style="display:none"></canvas>
+          <div class="countdown-overlay" id="countdown-overlay"><span id="countdown-num"></span></div>
+          <div class="flash-overlay" id="flash-overlay"></div>
+        </div>
+        <div class="camera-bottom">
+          <button class="btn-pill btn-ghost done-btn" onclick="doneCamera()">done</button>
+          <p id="camera-error" class="camera-error"></p>
+        </div>
       </div>
     </div>
   </section>
@@ -175,8 +245,14 @@
           <div class="final-strip-wrap">
             <canvas id="final-canvas"></canvas>
           </div>
+          <div class="video-preview-wrap" id="video-preview-wrap" style="display:none;">
+            <video id="final-video-preview" playsinline muted loop controls autoplay></video>
+          </div>
+          <p class="video-status" id="video-status"></p>
           <div class="download-actions">
-            <button class="btn-pill btn-solid" onclick="downloadStrip()">download</button>
+            <button class="btn-pill btn-solid" onclick="downloadStrip()">download photo</button>
+            <button class="btn-pill btn-ghost" id="make-video-btn" onclick="generateVideoStrip()" style="display:none;">🎬 make video strip (15s)</button>
+            <button class="btn-pill btn-solid" id="download-video-btn" onclick="downloadVideo()" style="display:none;">download video</button>
             <button class="btn-pill btn-landing" onclick="goTo('layout')"><em>wanna take more photos?</em></button>
           </div>
         </div>
@@ -210,5 +286,8 @@
   </footer>
 
   <script src="photobooth.js"></script>
+  <script src="video.js"></script>
+  <script src="inspo.js"></script>
+  <script src="duo.js"></script>
 </body>
 </html>

@@ -12,19 +12,37 @@
 // 1. NAVIGATION
 // ─────────────────────────────────────────────────
 
-const pages = ['landing', 'contact', 'layout', 'camera', 'choose', 'download'];
+const pages = ['landing', 'contact', 'duo-setup', 'layout', 'camera', 'choose', 'download'];
 
 function goTo(id) {
   pages.forEach(p => document.getElementById('page-' + p).classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   window.scrollTo(0, 0);
 
+  if (id === 'duo-setup') { if (typeof initDuoSetup === 'function') initDuoSetup(); }
   if (id === 'layout')   initLayout();
   if (id === 'camera')   initCamera();
   if (id === 'choose')   initChoose();
   if (id === 'download') initDownload();
   if (id !== 'camera')   stopCamera();
 }
+
+// ─────────────────────────────────────────────────
+// UPDATE BANNER
+// ─────────────────────────────────────────────────
+
+// The banner intentionally does NOT persist its dismissed state anywhere
+// (no localStorage) — it should reappear fresh every time the page loads,
+// and only stay hidden for the current page view once the user closes it.
+function initUpdateBanner() {
+  document.body.classList.add('has-banner');
+}
+
+function dismissUpdateBanner() {
+  document.body.classList.remove('has-banner');
+}
+
+initUpdateBanner();
 
 // ─────────────────────────────────────────────────
 // 2. EMAILJS / CONTACT
@@ -69,6 +87,8 @@ function initLayout() {
   document.getElementById('layout-previews').innerHTML = '';
   document.querySelector('.orientation-toggle').classList.remove('visible');
   updateOrientBtn();
+  if (typeof onInitLayoutInspo === 'function') onInitLayoutInspo();
+  if (typeof onInitLayoutDuo   === 'function') onInitLayoutDuo();
 }
 
 function selectCount(n) {
@@ -140,6 +160,11 @@ function goToCamera() {
     return;
   }
   document.getElementById('layout-hint').textContent = '';
+
+  if (typeof duoActive !== 'undefined' && duoActive && duoRole === 'host' && typeof sendDuo === 'function') {
+    sendDuo({ type: 'layout', count: selectedCount, orientation: selectedOrientation });
+  }
+
   goTo('camera');
 }
 
@@ -168,6 +193,9 @@ async function initCamera() {
   updatePhotoCounter();
   document.getElementById('camera-error').textContent = '';
   document.getElementById('camera-hint').textContent  = 'Wave your hand to start a 3 second timer.';
+  if (typeof resetVideoCapture === 'function') resetVideoCapture();
+  if (typeof onCameraInitInspo === 'function') onCameraInitInspo();
+  if (typeof onCameraInitDuo   === 'function') onCameraInitDuo();
 
   // Set camera viewport aspect ratio to match slot proportions
   const vp = document.getElementById('camera-viewport');
@@ -278,6 +306,7 @@ function startCountdown() {
       numEl.offsetWidth;
       numEl.style.animation = '';
       numEl.textContent = count;
+      if (count === 1 && typeof startPhotoRecording === 'function') startPhotoRecording();
     }
   }, 1000);
 }
@@ -312,6 +341,10 @@ function takePhoto() {
   const flash = document.getElementById('flash-overlay');
   flash.classList.add('flash');
   setTimeout(() => flash.classList.remove('flash'), 150);
+
+  if (typeof stopPhotoRecordingAndStore === 'function') setTimeout(stopPhotoRecordingAndStore, 400);
+  if (typeof onPhotoTakenInspo === 'function') onPhotoTakenInspo();
+  if (typeof onPhotoTakenDuo   === 'function') onPhotoTakenDuo();
 
   if (capturedPhotos.length >= MAX_PHOTOS) {
     document.getElementById('camera-hint').textContent = '6 photos taken! Press done when ready.';
@@ -353,6 +386,7 @@ function initChoose() {
     `Select up to ${selectedCount} photos. The rest will be discarded.`;
   renderPhotoGrid();
   renderStripPreview();
+  if (typeof onInitChooseDuo === 'function') onInitChooseDuo();
 }
 
 function renderPhotoGrid() {
@@ -392,6 +426,20 @@ function togglePhotoSelect(idx) {
 }
 
 function renderStripPreview() {
+  const outerWrap = document.getElementById('strip-preview-wrap');
+  const inspoOn = typeof inspoThemeKey !== 'undefined' && inspoThemeKey && typeof renderStripPreviewInspo === 'function';
+  const duoOn   = typeof duoActive !== 'undefined' && duoActive;
+
+  if (inspoOn && !duoOn) {
+    renderStripPreviewInspo();
+    return;
+  }
+
+  // Inspo mode may have replaced the plain #strip-preview element — restore it if needed.
+  if (outerWrap && !document.getElementById('strip-preview')) {
+    outerWrap.innerHTML = '<div class="strip-preview" id="strip-preview"></div>';
+  }
+
   const wrap   = document.getElementById('strip-preview');
   const isPort = selectedOrientation === 'portrait';
   wrap.innerHTML = '';
@@ -422,7 +470,8 @@ function doneChoose() {
     alert(`Please select ${selectedCount} photos.`);
     return;
   }
-  goTo('download');
+  if (typeof onDoneChooseDuo === 'function') onDoneChooseDuo();
+  else goTo('download');
 }
 
 // ─────────────────────────────────────────────────
@@ -463,7 +512,20 @@ function initDownload() {
   updateFrameSwatch();
   updateTintSwatch();
   setupColorPickerEvents();
-  renderFinalCanvas();
+  renderFinalCanvasAny();
+  if (typeof initVideoDownloadUI === 'function') initVideoDownloadUI();
+}
+
+// Picks which strip renderer to use: a live duo session takes priority
+// (two real people), then an inspo theme comparison, then the plain strip.
+function renderFinalCanvasAny() {
+  if (typeof duoActive !== 'undefined' && duoActive && typeof renderFinalCanvasDuo === 'function') {
+    renderFinalCanvasDuo();
+  } else if (typeof inspoThemeKey !== 'undefined' && inspoThemeKey && typeof renderFinalCanvasInspo === 'function') {
+    renderFinalCanvasInspo();
+  } else {
+    renderFinalCanvas();
+  }
 }
 
 // ── Canvas drawing helpers ──
@@ -519,7 +581,8 @@ function updateFrameSwatch() {
   const inp = document.getElementById('hex-input');
   if (sw)  sw.style.background = frameColor;
   if (inp) inp.value = frameColor.slice(1);
-  renderFinalCanvas();
+  renderFinalCanvasAny();
+  if (typeof broadcastDuoStyleIfActive === 'function') broadcastDuoStyleIfActive();
 }
 
 function updateTintSwatch() {
@@ -528,7 +591,8 @@ function updateTintSwatch() {
   const inp = document.getElementById('tint-hex-input');
   if (sw)  sw.style.background = tintColor;
   if (inp) inp.value = tintColor.slice(1);
-  renderFinalCanvas();
+  renderFinalCanvasAny();
+  if (typeof broadcastDuoStyleIfActive === 'function') broadcastDuoStyleIfActive();
 }
 
 // ── Greyscale toggle ──
@@ -538,7 +602,8 @@ function toggleGreyscale() {
   const btn = document.getElementById('greyscale-toggle');
   btn.textContent = useGreyscale ? 'on' : 'off';
   btn.classList.toggle('active', useGreyscale);
-  renderFinalCanvas();
+  renderFinalCanvasAny();
+  if (typeof broadcastDuoStyleIfActive === 'function') broadcastDuoStyleIfActive();
 }
 
 // ── Final canvas render ──
@@ -698,7 +763,8 @@ function setupColorPickerEvents() {
     if (val.length === 6) {
       frameColor = '#' + val.toUpperCase();
       document.getElementById('hex-swatch').style.background = frameColor;
-      renderFinalCanvas();
+      renderFinalCanvasAny();
+      if (typeof broadcastDuoStyleIfActive === 'function') broadcastDuoStyleIfActive();
     }
   });
 
@@ -716,7 +782,8 @@ function setupColorPickerEvents() {
     if (val.length === 6) {
       tintColor = '#' + val.toUpperCase();
       document.getElementById('tint-hex-swatch').style.background = tintColor;
-      renderFinalCanvas();
+      renderFinalCanvasAny();
+      if (typeof broadcastDuoStyleIfActive === 'function') broadcastDuoStyleIfActive();
     }
   });
 
@@ -726,7 +793,8 @@ function setupColorPickerEvents() {
   opSlider.addEventListener('input', () => {
     tintOpacity = parseInt(opSlider.value) / 100;
     opLabel.textContent = opSlider.value + '%';
-    renderFinalCanvas();
+    renderFinalCanvasAny();
+    if (typeof broadcastDuoStyleIfActive === 'function') broadcastDuoStyleIfActive();
   });
 }
 
@@ -734,8 +802,40 @@ function setupColorPickerEvents() {
 
 function downloadStrip() {
   const canvas = document.getElementById('final-canvas');
-  const link   = document.createElement('a');
-  link.download = 'photostrip.png';
-  link.href     = canvas.toDataURL('image/png');
-  link.click();
+  if (!canvas || !canvas.width || !canvas.height) {
+    showDownloadError('The photo strip isn\'t ready yet — give it a second and try again.');
+    return;
+  }
+
+  const triggerDownload = (blobOrUrl) => {
+    const link = document.createElement('a');
+    link.download = 'photostrip.png';
+    link.href = blobOrUrl;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  try {
+    if (canvas.toBlob) {
+      canvas.toBlob((blob) => {
+        if (!blob) { showDownloadError(); return; }
+        const url = URL.createObjectURL(blob);
+        triggerDownload(url);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      }, 'image/png');
+    } else {
+      triggerDownload(canvas.toDataURL('image/png'));
+    }
+  } catch (e) {
+    console.error('Download failed:', e);
+    showDownloadError();
+  }
+}
+
+function showDownloadError(message) {
+  const msg = message ||
+    'Download failed. If you opened this file directly (file://) instead of through a local server, ' +
+    'your browser may be blocking the download for security reasons — try running a local server instead (see README).';
+  alert(msg);
 }

@@ -16,7 +16,10 @@
   --radius-sm:  10px;
   --header-h:   70px;
   --page-px:    60px;  /* horizontal page padding */
+  --banner-h:   0px;   /* set by body.has-banner */
 }
+
+body.has-banner { --banner-h: 52px; }
 
 html, body {
   height: 100%;
@@ -26,10 +29,64 @@ html, body {
   overflow-x: hidden;
 }
 
+/* ── UPDATE BANNER ────────────────────────────── */
+.update-banner {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 110;
+  min-height: var(--banner-h);
+  display: none;
+  align-items: center;
+  background: linear-gradient(90deg, #ff8fd8, #b06bff 50%, #7a5cff);
+  border-bottom: 1px solid var(--white-15);
+}
+body.has-banner .update-banner { display: flex; }
+
+.update-banner-inner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px var(--page-px);
+}
+
+.update-banner-badge {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(255,255,255,0.9);
+  color: #7a2ea8;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.update-banner-text {
+  flex: 1;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.95);
+}
+.update-banner-text strong { font-weight: 600; color: #fff; }
+
+.update-banner-close {
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.18);
+  border: none;
+  color: #fff;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.75rem;
+  transition: background 0.2s;
+}
+.update-banner-close:hover { background: rgba(255,255,255,0.32); }
+
 /* ── HEADER ───────────────────────────────────── */
 header {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: var(--banner-h); left: 0; right: 0;
   z-index: 100;
   display: flex;
   align-items: center;
@@ -39,6 +96,16 @@ header {
   background: rgba(180, 120, 220, 0.4);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--white-15);
+  transition: top 0.2s;
+}
+
+.duo-header-badge {
+  font-size: 0.78rem;
+  color: var(--white);
+  background: rgba(255,255,255,0.15);
+  padding: 6px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 
 .logo {
@@ -99,9 +166,10 @@ nav { display: flex; align-items: center; gap: 24px; }
   display: none;
   position: relative;
   min-height: 100vh;
-  padding-top: var(--header-h);
+  padding-top: calc(var(--header-h) + var(--banner-h));
   overflow: hidden;
   background: radial-gradient(ellipse at 30% 40%, #d48ee8 0%, #a855c8 35%, #8b3aad 60%, #6b1f8f 100%);
+  transition: padding-top 0.2s;
 }
 .page.active { display: block; }
 
@@ -156,6 +224,47 @@ footer a:hover { color: var(--white); }
 }
 .landing-content p { font-size: 0.95rem; line-height: 1.7; color: var(--ink-muted); max-width: 660px; }
 .landing-content strong { color: var(--white); font-weight: 500; }
+.landing-btn-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* ── DUO SETUP ────────────────────────────────── */
+.duo-setup-content { max-width: 760px; padding-top: 24px; display: flex; flex-direction: column; gap: 20px; }
+.duo-setup-content h2 { font-family: 'DM Serif Display', serif; font-size: clamp(2rem, 4vw, 3rem); font-weight: 400; }
+.duo-setup-content .subtitle { max-width: 600px; }
+
+.duo-name-field { display: flex; flex-direction: column; gap: 8px; max-width: 320px; }
+.duo-name-field input {
+  font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--white);
+  background: rgba(240,220,255,0.18); border: 1px solid var(--white-15);
+  border-radius: var(--radius); padding: 12px 16px; outline: none;
+}
+
+.duo-setup-grid { display: flex; align-items: stretch; gap: 24px; flex-wrap: wrap; }
+.duo-setup-card {
+  flex: 1; min-width: 240px;
+  background: var(--surface); backdrop-filter: blur(20px);
+  border: 1px solid var(--white-30); border-radius: 20px;
+  padding: 28px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start;
+}
+.duo-setup-card h3 { font-family: 'DM Serif Display', serif; font-size: 1.4rem; font-weight: 400; }
+.duo-setup-divider { align-self: center; color: var(--ink-muted); font-style: italic; font-size: 0.85rem; }
+
+.duo-join-input {
+  width: 100%; font-family: 'DM Sans', monospace; letter-spacing: 2px; text-transform: uppercase;
+  font-size: 0.95rem; color: var(--white); background: rgba(240,220,255,0.18);
+  border: 1px solid var(--white-15); border-radius: var(--radius-sm); padding: 10px 14px; outline: none;
+}
+
+.duo-code-display { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin-top: 4px; }
+.duo-code-label { font-size: 0.78rem; color: var(--ink-muted); }
+.duo-code-value {
+  font-family: 'DM Sans', monospace; font-size: 1.8rem; letter-spacing: 6px; font-weight: 500;
+  background: rgba(255,255,255,0.12); border: 1px dashed var(--white-30);
+  border-radius: 10px; padding: 10px 20px; color: var(--white);
+}
+
+.duo-status { font-size: 0.85rem; color: rgba(255,255,255,0.85); min-height: 20px; }
+.duo-waiting-msg { font-size: 0.82rem; color: rgba(255,255,255,0.7); font-style: italic; margin-top: 4px; }
+.duo-friend-progress { font-size: 0.82rem; color: rgba(255,255,255,0.75); align-self: flex-start; margin: -4px 0 0; }
 
 /* ── CONTACT ──────────────────────────────────── */
 .contact-content { display: flex; align-items: flex-start; justify-content: center; padding-top: 24px; }
@@ -279,16 +388,118 @@ input:focus, textarea:focus { border-color: var(--white-60); background: rgba(24
 }
 .strip-cell { background: #c8b8d8; border-radius: 2px; flex-shrink: 0; }
 
+.tab.tab-disabled, .orient-btn.disabled { opacity: 0.4; pointer-events: none; }
+
+/* ── INSPO PANEL (layout page) ────────────────── */
+.inspo-panel {
+  position: relative;
+  z-index: 1;
+  margin: 8px var(--page-px) 40px;
+  background: var(--surface);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--white-30);
+  border-radius: 20px;
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.inspo-panel-header h3 { font-family: 'DM Serif Display', serif; font-size: 1.4rem; font-weight: 400; margin-bottom: 6px; }
+
+.inspo-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.inspo-theme-card {
+  position: relative;
+  cursor: pointer;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid transparent;
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+.inspo-theme-card:hover { transform: translateY(-2px); background: rgba(255,255,255,0.1); }
+.inspo-theme-card.selected { border-color: #fff; background: rgba(255,255,255,0.16); }
+
+.inspo-theme-preview {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.inspo-theme-preview-cell { aspect-ratio: 1 / 1; background: rgba(255,255,255,0.08); overflow: hidden; }
+.inspo-theme-preview-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.inspo-theme-card h4 { font-family: 'DM Serif Display', serif; font-weight: 400; font-size: 1.1rem; }
+.inspo-theme-card p { font-size: 0.8rem; color: var(--ink-muted); line-height: 1.4; }
+
+.inspo-theme-selected-badge {
+  position: absolute; top: 10px; right: 10px;
+  font-size: 0.68rem; font-weight: 600;
+  background: rgba(255,255,255,0.9); color: #6b1f8f;
+  padding: 3px 9px; border-radius: 999px;
+}
+
+.inspo-thumb-missing {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; text-align: center; padding: 8px;
+  color: rgba(255,255,255,0.6); font-size: 0.65rem; line-height: 1.4;
+}
+.inspo-thumb-missing .missing-emoji { font-size: 1.6rem; }
+
 /* ── CAMERA ───────────────────────────────────── */
 .camera-content {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 28px;
+  padding-top: 16px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.camera-main {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  padding-top: 16px;
   max-width: 900px;
-  margin: 0 auto;
+  flex: 1;
 }
+
+/* ── INSPO REFERENCE PANEL (camera page) ─────── */
+.inspo-reference-panel {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 190px;
+  flex-shrink: 0;
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--white-30);
+  border-radius: 16px;
+  padding: 14px;
+  position: sticky;
+  top: calc(var(--header-h) + var(--banner-h) + 16px);
+}
+.inspo-reference-panel.visible { display: flex; }
+.inspo-reference-label { font-size: 0.82rem; font-style: italic; color: var(--ink-muted); text-align: center; }
+.inspo-reference-img-wrap {
+  width: 100%; aspect-ratio: 3/4; border-radius: 10px; overflow: hidden;
+  background: rgba(255,255,255,0.08);
+}
+.inspo-reference-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.inspo-reference-counter { font-size: 0.72rem; color: var(--ink-muted); text-align: center; }
 
 .camera-header {
   display: flex;
@@ -395,6 +606,13 @@ input:focus, textarea:focus { border-color: var(--white-60); background: rgba(24
 .strip-slot { background: #ddd; flex-shrink: 0; overflow: hidden; }
 .strip-slot img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+/* ── INSPO COMPARISON STRIP (choose + download) ─ */
+.strip-comparison { display: flex; gap: 14px; }
+.strip-comparison.side-by-side { flex-direction: row; }
+.strip-comparison.stacked { flex-direction: column; }
+
+.strip-preview-meme .strip-slot { background: #eee2f5; }
+
 /* ── DOWNLOAD ─────────────────────────────────── */
 .download-content {
   display: flex;
@@ -426,6 +644,15 @@ input:focus, textarea:focus { border-color: var(--white-60); background: rgba(24
 .picker-label { font-size: 0.8rem; font-style: italic; color: var(--ink-muted); text-align: center; }
 
 .final-strip-wrap { display: flex; align-items: center; justify-content: center; }
+
+.video-preview-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 14px; }
+.video-status { font-size: 0.78rem; font-style: italic; color: var(--ink-muted); text-align: center; min-height: 1em; }
+#final-video-preview {
+  max-height: 30vh; max-width: 100%;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+  background: #000;
+}
 
 #final-canvas {
   display: block;
@@ -593,6 +820,53 @@ input:focus, textarea:focus { border-color: var(--white-60); background: rgba(24
 }
 .page.active .page-content { animation: fadeIn 0.4s ease-out; }
 
+/* ── DUO CURSORS ──────────────────────────────── */
+body.duo-active { cursor: none; }
+
+.duo-cursor {
+  position: fixed;
+  top: 0; left: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  pointer-events: none;
+  transform: translate(-4px, -4px);
+  transition: opacity 0.2s;
+  will-change: transform;
+}
+.duo-cursor-dot {
+  width: 16px; height: 16px;
+  border-radius: 50% 50% 50% 4px;
+  border: 2px solid rgba(255,255,255,0.9);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+  transform: rotate(-45deg);
+}
+.duo-cursor-you .duo-cursor-dot { background: #ff8fd8; }
+.duo-cursor-friend .duo-cursor-dot { background: #7ad0ff; }
+.duo-cursor-label {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(30, 10, 45, 0.75);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  margin-left: 14px;
+  margin-top: -14px;
+}
+
+/* ── DUO TWO-SIDED STRIP LABELS (download page) ─ */
+.duo-strip-names {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+  margin-bottom: 4px;
+}
+
 
 /* ════════════════════════════════════════════════
    MEDIA QUERIES
@@ -661,7 +935,8 @@ input:focus, textarea:focus { border-color: var(--white-60); background: rgba(24
   .layout-right { padding-bottom: 0; }
 
   /* Camera */
-  .camera-content { max-width: 100%; padding-top: 12px; }
+  .camera-content { max-width: 100%; padding-top: 12px; flex-direction: column; align-items: center; }
+  .inspo-reference-panel { width: 100%; max-width: 260px; position: static; }
 
   /* Choose: single column, strip preview below grid */
   .choose-content {
@@ -706,4 +981,12 @@ input:focus, textarea:focus { border-color: var(--white-60); background: rgba(24
 
   /* hide background blobs on phones for perf */
   .bg-blob { display: none; }
+
+  /* Banner wraps to more lines on very small screens */
+  body.has-banner { --banner-h: 76px; }
+  .update-banner-text { font-size: 0.74rem; }
+  .update-banner-inner { gap: 8px; }
+
+  .duo-setup-grid { flex-direction: column; }
+  .duo-setup-divider { display: none; }
 }
